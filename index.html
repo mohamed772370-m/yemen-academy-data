@@ -677,7 +677,8 @@ async function vSpec(u,s){
   if(legacyShape){
     const cards=lv.map((L,l)=>{const n=(L.terms||[]).reduce((a,T)=>a+((T.subjects||[]).length),0);
       return '<a class="dz-card" href="'+majorHref(u,s,l)+'">'+letterChip(L.name,S.color||UN.color)+'<span style="min-width:0"><b>'+esc(L.name)+'</b><small>'+(n?plural(n,'مادة','مادتان','مواد'):'')+'</small></span></a>'}).join('');
-    return head+'<div class="dz-grid">'+cards+'</div>';
+    const pin=await plansInline(S.plans);
+    return head+'<div class="dz-sec"><h3>المستويات <small style="color:var(--mut);font-weight:400">- بيانات مسجلة عن الجامعة</small></h3><div class="dz-grid">'+cards+'</div></div>'+pin;
   }
   /* فهرس فقط: لا مواد بعد */
   const cards=lv.map((L,l)=>{const planTag=(L.plans&&L.plans.length)?'<i class="dz-tag plan">خطة موحدة</i>':'';
@@ -690,6 +691,25 @@ function planCards(plans){
   const items=plans.map(p=>{const P=(PLANS||[]).find(q=>q.n===p.n);const nm=P?P.name:'الخطة رقم '+p.n;
     return '<a class="dz-card" href="#/plan/'+p.n+'/'+encodeURIComponent(p.v||'')+'"><span class="dz-ltr" style="background:linear-gradient(135deg,#5b3fd4,#3d2a9e)">م</span><span style="min-width:0"><b>'+esc(nm)+(p.v?' — '+esc(p.v):'')+'</b><small>الخطة الدراسية الموحدة الوطنية'+(P&&P.courses?' · '+plural(P.courses,'مادة','مادتان','مواد'):'')+'</small></span><i class="dz-tag plan">مرجع وطني</i></a>'}).join('');
   return '<div class="dz-sec"><h3>الخطط الدراسية الموحدة المقابلة</h3><div class="dz-note blue">الربط بحسب مسمى البرنامج بين بيانات الموقع وخطط المصدر — مطابقة اسمية لا تثبت اعتماد الجامعة للخطة حرفياً.</div><div class="dz-grid">'+items+'</div></div>';
+}
+/* ---- تركيب الخطة الوطنية داخل صفحة التخصص (موسومة كمرجع، تُجلب عند فتح التخصص فقط) ---- */
+async function plansInline(plans){
+  if(!plans||!plans.length)return '';
+  let out='';
+  for(const p of plans){
+    let D=null;try{D=await ensurePlan(p.n)}catch(e){}
+    if(!D){out+=planCards([p]);continue}
+    let V=D.versions[0];
+    if(p.v){const f=D.versions.find(v=>v.name===p.v);if(f)V=f}
+    const years=V.years.map(Y=>{
+      const terms=Y.terms.map(T=>{
+        const rows=T.subjects.map(x=>'<tr><td>'+esc(x.ar||x.en||'—')+(x.elec?' <span class="dz-elec">اختياري</span>':'')+(x.en&&x.ar?'<div style="font-size:11px;color:var(--mut);direction:ltr;text-align:end">'+esc(x.en)+'</div>':'')+'</td><td class="dz-code">'+(x.code?esc(x.code):'—')+'</td><td class="dz-h">'+(x.h?esc(x.h):'—')+'</td></tr>').join('');
+        return '<div class="dz-acc"><button type="button"><span>'+esc(T.name)+'</span><small>'+plural(T.subjects.length,'مادة','مادتان','مواد')+'</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#4d5d8c" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="dz-body"><table class="dz-table"><thead><tr><th>المادة</th><th>الشيفرة</th><th>الساعات</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'}).join('');
+      return '<div class="dz-sec"><h3>'+esc(Y.name)+'</h3>'+terms+'</div>'}).join('');
+    const opts=(D.options||[]).map(g=>'<div class="dz-sec"><h3>'+esc(g.title)+'</h3>'+(g.note?'<div class="dz-note">'+esc(g.note)+'</div>':'')+'<table class="dz-table"><thead><tr><th>المادة</th><th>الشيفرة</th><th>الساعات</th></tr></thead><tbody>'+g.items.map(x=>'<tr><td>'+esc(x.ar||x.en||'—')+'</td><td class="dz-code">'+(x.code?esc(x.code):'—')+'</td><td class="dz-h">'+(x.h?esc(x.h):'—')+'</td></tr>').join('')+'</tbody></table></div>').join('');
+    out+='<div class="dz-sec"><h3>الخطة الوطنية الموحدة: '+esc(D.name)+(V.name?' - '+esc(V.name):'')+' <i class="dz-tag plan">مرجع وطني</i></h3><div class="dz-note blue">خطة وطنية موحدة مرتبطة بهذا التخصص بمطابقة اسمية - مرجع للاسترشاد، وليست بالضرورة الخطة المعتمدة حرفياً في هذه الجامعة. الصفوف المعلَّمة «اختياري» خانات اختيار ولا تُحسب كمواد إلزامية ثابتة. <a href="#/plan/'+p.n+'/'+encodeURIComponent(p.v||'')+'" style="color:#0a4fd6">فتح صفحة الخطة</a></div>'+years+opts+'</div>';
+  }
+  return out;
 }
 /* ---- عرض: تخصص (سنوات) أو سنة قديمة (فصول) ---- */
 async function vMajor(u,s,l){
@@ -705,7 +725,9 @@ async function vMajor(u,s,l){
     const years=L.years.map((Y,y)=>{
       const n=(Y.terms||[]).reduce((a,T)=>a+((T.subjects||[]).length),0);
       return '<a class="dz-card" href="'+yearHref(u,s,l,y)+'">'+letterChip(Y.name,S.color||UN.color)+'<span style="min-width:0"><b>'+esc(Y.name)+'</b><small>'+(n?plural(n,'مادة','مادتان','مواد'):'—')+'</small></span></a>'}).join('');
-    return head+planCards(L.plans)+'<div class="dz-sec"><h3>'+esc(lvlLabel(UN,'yearP','المستويات'))+'</h3><div class="dz-grid">'+years+'</div></div>';
+    const pin=await plansInline(L.plans);
+    const uHas=L.years.some(Y=>(Y.terms||[]).some(T=>(T.subjects||[]).length));
+    return head+'<div class="dz-sec"><h3>'+esc(lvlLabel(UN,'yearP','المستويات'))+(uHas?' <small style="color:var(--mut);font-weight:400">- بيانات مسجلة عن الجامعة</small>':'')+'</h3><div class="dz-grid">'+years+'</div></div>'+pin;
   }
   /* الشكل القديم: L = سنة/مستوى فيها فصول مباشرة */
   const yearLabel=L.name;
