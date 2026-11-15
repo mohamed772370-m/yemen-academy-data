@@ -864,6 +864,9 @@ window.__dzRoute=function(k){
 /* بحث الترويسة: يوجّه إلى فهرس التخصصات */
 const hq=$('.hdr .srch input');
 if(hq){hq.addEventListener('keydown',e=>{if(e.key==='Enter'&&hq.value.trim()){location.hash='#/u-majors';setTimeout(()=>{const q=$('#dzq');if(q){q.value=hq.value.trim();q.dispatchEvent(new Event('input'))}},350)}})}
+/* فتح الصفحة مباشرة على رابط قسم بيانات (أو بعد إعادة التحميل/تدوير الشاشة): موجّه الصفحة الأصلي عمل قبل تعريف __dzRoute، فنعيد التوجيه هنا إن كان القسم فارغًا */
+const cur0=location.hash.replace(/^#\/?/,'');
+if(/^(?:u-gov|u-private|u-all|u-majors|uni\/|plan\/)/.test(cur0)&&!dz.textContent.trim())window.__dzRoute(cur0);
 })();
 </script>
 
