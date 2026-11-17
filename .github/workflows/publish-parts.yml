@@ -21,9 +21,8 @@ jobs:
           cp /tmp/site-upload/index.html index.html
           mkdir -p assets/data
           cp /tmp/site-upload/assets/data/site-data.json assets/data/site-data.json
-          rm -f site-upload.part00 site-upload.part01 site-upload.part02 site-upload.part03 site-upload.zip
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add index.html assets/data/site-data.json
           git commit -m "Publish synced Yemen Academy site"
           git push
