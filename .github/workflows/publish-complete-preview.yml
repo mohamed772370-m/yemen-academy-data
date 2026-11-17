@@ -1,0 +1,39 @@
+name: Publish complete Yemen Academy preview
+
+on:
+  push:
+    branches: [main]
+    paths: [complete-preview.publish]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download reviewed complete files
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/complete-preview
+          curl -L --fail --retry 3 'https://drive.google.com/uc?id=1vdNyoKreBY4H_FSI19NLIoNPBx4BI_MX&export=download' -o /tmp/complete-preview/complete-site-data.json
+          curl -L --fail --retry 3 'https://drive.google.com/uc?id=1gHS2-arnNvmfhRQ6Eq4pyQo9R4gFw94q&export=download' -o /tmp/complete-preview/index.html
+          echo '6a49a7bb9a15d608283a83c0e7238f060601f98fc0a6033e5578479942ba735a  /tmp/complete-preview/complete-site-data.json' | sha256sum -c -
+          echo '2a242292b256ee968980ef739ae88032c1dd88fc0c1346dfc897a06fcb620343  /tmp/complete-preview/index.html' | sha256sum -c -
+          mkdir -p assets/data complete-preview
+          cp /tmp/complete-preview/complete-site-data.json assets/data/complete-site-data.json
+          cp /tmp/complete-preview/index.html complete-preview/index.html
+      - name: Commit complete preview files
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/data/complete-site-data.json complete-preview/index.html
+          if git diff --cached --quiet; then
+            echo 'Complete preview files already match.'
+          else
+            git commit -m 'Publish complete Yemen Academy preview'
+            git push
+          fi
