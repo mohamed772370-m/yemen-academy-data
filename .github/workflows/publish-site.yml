@@ -1,0 +1,29 @@
+name: Publish synced site
+on:
+  push:
+    branches: [main]
+    paths: [site-upload.zip]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack and publish
+        run: |
+          set -euo pipefail
+          test -f site-upload.zip
+          rm -rf /tmp/site-upload
+          mkdir -p /tmp/site-upload
+          unzip -q site-upload.zip -d /tmp/site-upload
+          cp /tmp/site-upload/index.html index.html
+          mkdir -p assets/data
+          cp /tmp/site-upload/assets/data/site-data.json assets/data/site-data.json
+          rm -f site-upload.zip .github/workflows/publish-site.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish synced Yemen Academy site"
+          git push
