@@ -18,7 +18,7 @@ jobs:
           curl -L --fail --retry 3 'https://drive.google.com/uc?id=1vdNyoKreBY4H_FSI19NLIoNPBx4BI_MX&export=download' -o /tmp/complete-preview/complete-site-data.json
           curl -L --fail --retry 3 'https://drive.google.com/uc?id=1gHS2-arnNvmfhRQ6Eq4pyQo9R4gFw94q&export=download' -o /tmp/complete-preview/index.html
           echo '6a49a7bb9a15d608283a83c0e7238f060601f98fc0a6033e5578479942ba735a  /tmp/complete-preview/complete-site-data.json' | sha256sum -c -
-          echo '2a242292b256ee968980ef739ae88032c1dd88fc0c1346dfc897a06fcb620343  /tmp/complete-preview/index.html' | sha256sum -c -
+          echo 'faf06f8ff67848770c4e041050e6a9246c1ca7705a01d9bc9a4a63018c1f8a18  /tmp/complete-preview/index.html' | sha256sum -c -
           mkdir -p assets/data complete-preview
           cp /tmp/complete-preview/complete-site-data.json assets/data/complete-site-data.json
           cp /tmp/complete-preview/index.html complete-preview/index.html
