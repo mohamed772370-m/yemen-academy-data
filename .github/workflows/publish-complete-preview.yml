@@ -1,9 +1,6 @@
 name: Publish complete Yemen Academy preview
 
 on:
-  push:
-    branches: [main]
-    paths: [complete-preview.publish]
   workflow_dispatch:
 
 permissions:
